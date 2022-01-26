@@ -40,6 +40,9 @@ import java.util.*;
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
+    String idp = "";
+    String publicKeyList = "";
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         if(request.getServletPath().equals("/api/login")) {
@@ -108,7 +111,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     public void validateSignature(SignedJWT jwt) throws MalformedURLException, JwkException, JOSEException, InvalidTokenException, JSONException {
 
         JSONObject obj = new JSONObject(jwt.getHeader().toString());
-        JwkProvider provider = new UrlJwkProvider(new URL("https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_lpXy3ZUTM/.well-known/jwks.json"));
+        JwkProvider provider = new UrlJwkProvider(new URL(publicKeyList));
 
         String kid = obj.getString("kid");
         Jwk jwk = provider.get(kid);
@@ -127,7 +130,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
         if(!claimsSet.getExpirationTime().after(presentTime)) {
             throw new InvalidTokenException("Token has expired");
-        }else if(!claimsSet.getIssuer().equals("https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_lpXy3ZUTM")) {
+        }else if(!claimsSet.getIssuer().equals(idp)) {
             throw new InvalidTokenException("Token issuer is not registered..");
         }
     }
